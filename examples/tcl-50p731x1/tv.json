@@ -1,0 +1,6 @@
+{
+  "tv": "TCL 50P731X1 (2022, Smart TV Pro, G03_4K_GB / BeyondTV4, Realtek RTD2851M, V8-R51MT05 AR11, client TCL-EU-RTD51M-S1), Netherlands",
+  "os": "Google TV launcher on Android TV 11",
+  "brand": "TCL",
+  "notes": "TCL BI/TTVS/logkit analytics, promos and content rows, TCL Live FAST channels, Google partner plumbing, setupwraith (takes HOME once the stock launcher is off), unused preloads; voice input, Chromecast, firmware updates and Live TV kept; usercenter kept; IR remote with Netflix and Prime buttons only (4062/4099 via app_keys), gear 4077 opens Settings; photo-screensaver replaces dreamx; the firmware stops Plex and a list of other streaming apps at standby (standbyProcessBlackList in /vendor/etc/default_feature_config.json), so they do not resume; config.json for tools/theme.sh; tested on a real 50P731X1"
+}

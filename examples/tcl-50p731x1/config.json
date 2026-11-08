@@ -1,0 +1,37 @@
+{
+  "dock_apps": [
+    "com.plexapp.android",
+    "com.google.android.youtube.tv",
+    "nl.uitzendinggemist"
+  ],
+  "fill_dock": true,
+  "columns": 5,
+  "rows_below_dock": 0,
+  "single_row": false,
+  "background_color": "#05070C",
+  "ambient_glow": false,
+  "app_glow": false,
+  "header_white": true,
+  "dock_glass": true,
+  "dock_opacity": 40,
+  "dock_even_padding": true,
+  "icon_only_buttons": true,
+  "icon_only_inputs": true,
+  "fade_rows": false,
+  "focus_overshoot": false,
+  "advanced_effects": false,
+  "hidden_apps": [
+    "com.tcl.tv"
+  ],
+  "live_tv_package": "com.tcl.tv",
+  "settings_key_keycodes": [
+    83,
+    4020,
+    4077
+  ],
+  "app_keys": [
+    "4062:com.plexapp.android",
+    "4099:com.google.android.youtube.tv"
+  ],
+  "power_on_home_always": false
+}

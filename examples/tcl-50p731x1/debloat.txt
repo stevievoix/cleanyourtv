@@ -1,0 +1,97 @@
+# TCL 50P731X1 (2022, Google TV, Realtek RTD2851M), Netherlands, Ethernet
+# Applied and tested 2026-11-08 on a real unit. ro.product.model Smart TV Pro, product G03_4K_GB, device BeyondTV4, Android 11 (SDK 30),
+# build RP1A.200622.001, incremental AR11, security patch 2024-12-05, client string TCL-EU-RTD51M-S1 (sku eu),
+# ro.product.cpu.abilist armeabi-v7a,armeabi, 2 GB RAM, ro.adb.secure 1 (the "Allow USB debugging?" prompt appears once).
+# Same G03 platform as examples/tcl-43c645 and examples/tcl-g03-google-tv. Port 5555 was open with only USB debugging on.
+#
+# What worked: groups 1-3 (31 packages; com.disney.disneyplus is not installed here and was dropped), reboot kept all of them off,
+# every TV input (tuner + 4 passthrough/HDMI) stayed in `dumpsys tv_input`. The standby/wake test (no full restart) passed.
+# Group 4 (setupwraith) had to go BEFORE launcher\build-and-install.ps1: with it on, Home resolved to setupwraith/.RecoveryActivity and the
+# script rolled back by itself. A Wi-Fi network saved during first setup belonged to setupwraith; the set is on Ethernet, so it was
+# disabled with FORCE_SETUPWRAITH=1 and that network was deleted (ADB and internet kept running over eth0).
+# Group 5 (dreamx) went off after the photo-screensaver add-on was the active screensaver; after a reboot screensaver_components, dreamx,
+# setupwraith and launcherx were all still as set (nothing came back).
+#
+# Remote: infrared (mtkinp), only Netflix and Prime Video buttons (no YouTube button). Keycodes seen in logcat
+# (TclPhoneWindowManager): Netflix 4062, Prime Video 4099, gear 4077. See config.json (app_keys 4062/4099, settings_key_keycodes 4077).
+#
+# Standby: this firmware force-stops the top app at standby when it is on standbyProcessBlackList in
+# /vendor/etc/default_feature_config.json (TclPowerManagerService.killBlackListStandbyProcess): com.plexapp.android, com.hbo.hbonow and
+# about 45 other streaming apps. YouTube and NPO Start (nl.uitzendinggemist) are not on it and resume. The file is on the read-only
+# vendor partition. power_on_home_always is false here so HDMI and those apps resume; a changed config is only read when HomeKeyService
+# restarts (force-stop com.gathin.tvhome and toggle the accessibility service, or reboot).
+#
+# Household choices (2026-11-08):
+#   kept: voice input (speaking instead of typing), Chromecast (mediashell, not listed), TCL firmware updates,
+#         Live TV via antenna/cable (com.tcl.tv + com.tcl.tvinput, never listed), HDMI-CEC.
+#   off:  Google Photos ambient mode (replaced by the photo-screensaver add-on with own photos), streaming preloads
+#         nobody uses (apps used: Plex, YouTube, NPO Start).
+# Left on after `dumpsys package` (not started): com.tcl.gamebar, com.tcl.t_solo (Bluetooth listen-alone), com.tcl.magiconnectfree
+# (multiscreen), com.tcl.tclchannel.overlay.
+#
+# Apply one group at a time (Windows):
+#   powershell -ExecutionPolicy Bypass -File tools\disable.ps1 -TvHost <tv ip> <group list>
+# Undo everything:
+#   powershell -ExecutionPolicy Bypass -File tools\restore.ps1 -TvHost <tv ip> examples\tcl-50p731x1\debloat.txt -Stock com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Re-enable one package: tools\venv\Scripts\python.exe -I tools\tv.py "pm enable <package>"
+#
+# Never disable (from the G03 lists): com.tcl.providers.config com.tcl.initsetup com.tcl.factory.view
+# com.tcl.system.server com.tcl.tcl_bt_rcu_service com.tcl.autopair com.tcl.tvinput com.tcl.tv com.tcl.tvpassthrough
+# com.tcl.settings com.tcl.inputmethod.international com.tcl.sourcemananger com.tcl.keycustomfunctionservice
+# com.tcl.suspension (Input key / source panel) com.google.android.inputmethod.latin com.google.android.gms
+# com.google.android.gsf com.android.vending com.google.android.apps.mediashell (Chromecast)
+# com.tcl.xian.StartandroidService (TCL updater needs it for the device number, see tcl-g03-google-tv)
+
+# 1. Telemetry, promos, content rows
+com.tcl.bi
+com.tcl.ttvs                                # TCL identifier/awareness services
+com.tcl.logkit                              # log collection, remote diagnosis
+com.tcl.dashboard
+com.tcl.esticker
+com.tcl.messagebox
+com.tcl.overseasappshow
+com.tcl.waterfall.overseas                  # TCL content recommendations
+com.tcl.tv.tclhome_passive
+com.tcl.channelplus                         # TCL Live: FAST channels with ads (own TV input; check dumpsys tv_input after)
+com.google.android.partnersetup
+com.google.android.feedback
+com.google.android.onetimeinitializer
+# com.tcl.partnercustomizer                 # promo receivers, but also TKey activities on the 50C641: decide after the remote test
+
+# 2. Extras and unused preloads
+com.tcl.useragreement
+com.tcl.guard
+com.tcl.keyhelp
+com.tcl.smartalexa                          # Alexa integration
+com.tcl.ocean.instructions                  # on-screen manual
+com.tcl.hearaid
+com.tcl.browser
+com.tcl.miracast                            # screen mirroring; Chromecast stays
+com.google.android.apps.nbu.smartconnect.tv
+com.google.android.syncadapters.calendar
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.google.android.videos
+com.tcl.gallery                             # disable.sh skips it if it holds TV_INPUT_HARDWARE
+com.tcl.ui_mediaCenter                      # USB media player; re-enable for USB drives
+# com.tcl.android.webview                   # tested off on one 43C645 only; leave on unless the probe shows a second webview in use
+
+# 3. Streaming preloads nobody here uses (re-enable with pm enable before installing from Play)
+com.netflix.ninja
+com.amazon.amazonvideo.livingroom
+com.disney.disneyplus
+tv.wuaki.apptv                              # Rakuten TV
+
+# 4. Google TV first-run wizard (claims HOME once the stock launcher is off); after the launcher is Home.
+# On Ethernet no saved Wi-Fi network can be lost, but check `dumpsys wifi | grep -o 'cname=[^ ]*'` anyway.
+com.google.android.tungsten.setupwraith
+
+# 5. Google ambient-mode screensaver, only after the photo-screensaver add-on is the active screensaver.
+# dreamx also hosts the Google Home panel in quick settings (not used here; Home Assistant instead).
+com.google.android.apps.tv.dreamx
+
+# Deliberately NOT listed:
+# com.tcl.usercenter        a 43C641 on the same platform rebooted when waking from standby with it off (#3533)
+# com.tcl.versionUpdateApp  firmware updates kept by choice
+# com.google.android.katniss com.tcl.assistant com.tcl.micmanager com.google.android.tv.assistant   voice input kept
+# com.google.android.apps.tv.launcherx   disabled by launcher\build-and-install.ps1 once the new launcher is Home
